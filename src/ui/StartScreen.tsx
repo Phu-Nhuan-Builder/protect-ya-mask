@@ -1,5 +1,6 @@
 import { useGame } from '@/store/GameContext';
 import { useEffect, useState } from 'react';
+import * as ex from 'excalibur';
 import logoImg from '@/assets/logo/logo.png';
 import phunhuanLogo from '@/assets/logo/phunhuanbuilder.jpg';
 import hackonteamLogo from '@/assets/logo/hackonteam.png';
@@ -8,7 +9,14 @@ export function StartScreen() {
   const { startGame } = useGame();
   const [isVisible, setIsVisible] = useState(true);
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    // Resume AudioContext on user gesture to fix autoplay restrictions
+    try {
+      await ex.WebAudio.unlock();
+    } catch (e) {
+      console.log('WebAudio unlock failed:', e);
+    }
+    
     setIsVisible(false);
     setTimeout(() => startGame(), 300);
   };
