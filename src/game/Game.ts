@@ -138,7 +138,7 @@ export class GameEngine {
 
   public start(): void {
     if (!this.isInitialized) {
-      console.warn('Game not initialized');
+      console.log('Game not initialized yet, waiting...');
       return;
     }
     
@@ -146,6 +146,10 @@ export class GameEngine {
     this.spawner?.start();
     this.setLevelBackground(1);
     this.playLevelMusic(1);
+  }
+
+  public isReady(): boolean {
+    return this.isInitialized;
   }
 
   public stop(): void {

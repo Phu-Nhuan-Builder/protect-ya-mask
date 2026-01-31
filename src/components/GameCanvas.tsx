@@ -38,22 +38,20 @@ export function GameCanvas() {
   // Start/stop game based on state
   useEffect(() => {
     const game = getGame();
-    if (!game || !gameInitialized.current) {
-      if (state.isPlaying) {
-        console.log('Waiting for game to initialize before starting...');
-        // Retry after a short delay if game is not ready
-        const timer = setTimeout(() => {
+    if (!game) return;
+
+    // Poll until game is ready
+    if (state.isPlaying && !state.isPaused) {
+      if (!game.isReady()) {
+        const pollInterval = setInterval(() => {
           const g = getGame();
-          if (g && state.isPlaying && !state.isPaused) {
+          if (g?.isReady()) {
+            clearInterval(pollInterval);
             g.start();
           }
-        }, 100);
-        return () => clearTimeout(timer);
+        }, 50);
+        return () => clearInterval(pollInterval);
       }
-      return;
-    }
-
-    if (state.isPlaying && !state.isPaused) {
       game.start();
     } else if (state.isGameOver || state.isVictory) {
       game.stop();
