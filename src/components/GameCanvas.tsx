@@ -39,10 +39,19 @@ export function GameCanvas() {
       game.start();
     } else if (state.isGameOver || state.isVictory) {
       game.stop();
+      game.playGameOverSound();
     } else if (state.isPaused) {
       game.pause();
     }
   }, [state.isPlaying, state.isPaused, state.isGameOver, state.isVictory]);
+
+  // Handle level changes
+  useEffect(() => {
+    const game = getGame();
+    if (!game || !state.isPlaying) return;
+
+    game.onLevelChange(state.level);
+  }, [state.level, state.isPlaying]);
 
   // Restart handler
   useEffect(() => {

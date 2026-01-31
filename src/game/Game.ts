@@ -1,7 +1,8 @@
 import * as ex from 'excalibur';
-import { GAME_WIDTH, GAME_HEIGHT } from '@/game/constants';
+import { GAME_WIDTH, GAME_HEIGHT, LEVELS } from '@/game/constants';
 import { Player } from '@/game/actors/Player';
 import { Spawner } from '@/game/actors/Spawner';
+import { loader, Images, Sounds } from '@/game/resources';
 
 export class GameEngine {
   private engine: ex.Engine;
@@ -9,6 +10,8 @@ export class GameEngine {
   private spawner: Spawner | null = null;
   private isInitialized: boolean = false;
   private lastUpdateTime: number = 0;
+  private backgroundActor: ex.Actor | null = null;
+  private currentMusicTrack: ex.Sound | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new ex.Engine({
@@ -24,10 +27,23 @@ export class GameEngine {
   public async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
+    // Load all resources
+    await this.engine.start(loader);
+
     // Create main scene
     const mainScene = new ex.Scene();
     this.engine.addScene('main', mainScene);
     this.engine.goToScene('main');
+
+    // Add background
+    this.backgroundActor = new ex.Actor({
+      x: GAME_WIDTH / 2,
+      y: GAME_HEIGHT / 2,
+      anchor: ex.vec(0.5, 0.5),
+      z: -100,
+    });
+    this.setLevelBackground(1);
+    mainScene.add(this.backgroundActor);
 
     // Initialize player at center
     this.player = new Player(GAME_WIDTH / 2, GAME_HEIGHT / 2);
@@ -35,9 +51,6 @@ export class GameEngine {
 
     // Initialize spawner
     this.spawner = new Spawner(mainScene);
-
-    // Add background grid effect
-    this.addBackgroundEffect(mainScene);
 
     // Setup update loop for spawner
     this.lastUpdateTime = performance.now();
@@ -51,33 +64,67 @@ export class GameEngine {
     });
 
     this.isInitialized = true;
+    this.engine.stop(); // Stop until game starts
   }
 
-  private addBackgroundEffect(scene: ex.Scene): void {
-    // Add subtle grid lines
-    const gridSize = 50;
-    const gridColor = ex.Color.fromHex('#1a1a2e');
+  public setLevelBackground(level: number): void {
+    if (!this.backgroundActor) return;
 
-    for (let x = 0; x <= GAME_WIDTH; x += gridSize) {
-      const line = new ex.Actor({
-        x: x,
-        y: GAME_HEIGHT / 2,
-        width: 1,
-        height: GAME_HEIGHT,
-        color: gridColor,
-      });
-      scene.add(line);
+    let bgImage: ex.ImageSource | null = null;
+    switch (level) {
+      case 1:
+        bgImage = Images.level1Bg;
+        break;
+      case 2:
+        bgImage = Images.level2Bg;
+        break;
+      case 3:
+        bgImage = Images.level3Bg;
+        break;
     }
 
-    for (let y = 0; y <= GAME_HEIGHT; y += gridSize) {
-      const line = new ex.Actor({
-        x: GAME_WIDTH / 2,
-        y: y,
-        width: GAME_WIDTH,
-        height: 1,
-        color: gridColor,
-      });
-      scene.add(line);
+    if (bgImage && bgImage.isLoaded()) {
+      const sprite = bgImage.toSprite();
+      // Scale to fit game dimensions
+      sprite.scale = ex.vec(GAME_WIDTH / sprite.width, GAME_HEIGHT / sprite.height);
+      this.backgroundActor.graphics.use(sprite);
+    }
+  }
+
+  public playLevelMusic(level: number): void {
+    // Stop current music
+    this.stopMusic();
+
+    let music: ex.Sound | null = null;
+    switch (level) {
+      case 1:
+        music = Sounds.level1Music;
+        break;
+      case 2:
+        music = Sounds.level2Music;
+        break;
+      case 3:
+        music = Sounds.level3Music;
+        break;
+    }
+
+    if (music && music.isLoaded()) {
+      music.loop = true;
+      music.play(0.3);
+      this.currentMusicTrack = music;
+    }
+  }
+
+  public stopMusic(): void {
+    if (this.currentMusicTrack) {
+      this.currentMusicTrack.stop();
+      this.currentMusicTrack = null;
+    }
+  }
+
+  public playGameOverSound(): void {
+    if (Sounds.gameOver.isLoaded()) {
+      Sounds.gameOver.play(0.5);
     }
   }
 
@@ -89,20 +136,23 @@ export class GameEngine {
     
     this.engine.start();
     this.spawner?.start();
+    this.setLevelBackground(1);
+    this.playLevelMusic(1);
   }
 
   public stop(): void {
     this.spawner?.stop();
+    this.stopMusic();
     this.engine.stop();
   }
 
   public restart(): void {
-    // Clear all enemies
+    // Clear all enemies (keep player and background)
     const mainScene = this.engine.currentScene;
     if (mainScene) {
       const actors = mainScene.actors;
       actors.forEach((actor) => {
-        if (actor !== this.player) {
+        if (actor !== this.player && actor !== this.backgroundActor) {
           actor.kill();
         }
       });
@@ -116,6 +166,10 @@ export class GameEngine {
     if (this.player) {
       this.player.setMask('NEUTRAL');
     }
+
+    // Reset background and music
+    this.setLevelBackground(1);
+    this.playLevelMusic(1);
   }
 
   public pause(): void {
@@ -132,6 +186,11 @@ export class GameEngine {
 
   public getEngine(): ex.Engine {
     return this.engine;
+  }
+
+  public onLevelChange(level: number): void {
+    this.setLevelBackground(level);
+    this.playLevelMusic(level);
   }
 }
 

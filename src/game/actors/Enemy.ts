@@ -3,6 +3,7 @@ import { MaskType } from '@/store/initialState';
 import { ENEMY_SIZE, MASK_HEX_COLORS, ZONE_CIRCLE_RADIUS } from '@/game/constants';
 import { Player } from '@/game/actors/Player';
 import * as StoreBridge from '@/game/storeBridge';
+import { Images, Sounds } from '@/game/resources';
 
 export class Enemy extends ex.Actor {
   public enemyType: MaskType;
@@ -35,16 +36,35 @@ export class Enemy extends ex.Actor {
   }
 
   onInitialize(): void {
-    // Draw enemy with type color
-    const color = ex.Color.fromHex(MASK_HEX_COLORS[this.enemyType]);
-    
-    const enemyGraphic = new ex.Circle({
-      radius: ENEMY_SIZE / 2,
-      color: color,
-      strokeColor: ex.Color.White,
-      lineWidth: 2,
-    });
-    this.graphics.use(enemyGraphic);
+    // Get enemy sprite based on type
+    let enemyImage: ex.ImageSource | null = null;
+    switch (this.enemyType) {
+      case 'WORK':
+        enemyImage = Images.enemyWork;
+        break;
+      case 'FAMILY':
+        enemyImage = Images.enemyFamily;
+        break;
+      case 'SOCIAL':
+        enemyImage = Images.enemySocial;
+        break;
+    }
+
+    if (enemyImage && enemyImage.isLoaded()) {
+      const sprite = enemyImage.toSprite();
+      sprite.scale = ex.vec(ENEMY_SIZE / sprite.width * 1.5, ENEMY_SIZE / sprite.height * 1.5);
+      this.graphics.use(sprite);
+    } else {
+      // Fallback to colored circle
+      const color = ex.Color.fromHex(MASK_HEX_COLORS[this.enemyType]);
+      const enemyGraphic = new ex.Circle({
+        radius: ENEMY_SIZE / 2,
+        color: color,
+        strokeColor: ex.Color.White,
+        lineWidth: 2,
+      });
+      this.graphics.use(enemyGraphic);
+    }
 
     // Calculate direction to target
     const direction = ex.vec(this.targetX - this.pos.x, this.targetY - this.pos.y).normalize();
@@ -93,7 +113,12 @@ export class Enemy extends ex.Actor {
   private onSuccessfulBlock(): void {
     StoreBridge.addScore(10);
     
-    // Spawn success effect (sparkle)
+    // Play success sound
+    if (Sounds.glassCling.isLoaded()) {
+      Sounds.glassCling.play(0.5);
+    }
+    
+    // Spawn success effect
     this.spawnEffect('success');
   }
 
@@ -102,28 +127,41 @@ export class Enemy extends ex.Actor {
     StoreBridge.resetCombo();
     StoreBridge.triggerShake();
     
-    // Spawn fail effect (crack)
+    // Play fail sound
+    if (Sounds.glassBreaking.isLoaded()) {
+      Sounds.glassBreaking.play(0.5);
+    }
+    
+    // Spawn fail effect
     this.spawnEffect('fail');
   }
 
   private spawnEffect(type: 'success' | 'fail'): void {
-    // Create visual feedback effect
     const effect = new ex.Actor({
       x: this.pos.x,
       y: this.pos.y,
-      width: 60,
-      height: 60,
+      anchor: ex.vec(0.5, 0.5),
     });
 
-    const color = type === 'success' 
-      ? ex.Color.fromHex('#FFD700') // Gold
-      : ex.Color.fromHex('#FF4444'); // Red
-
-    const effectGraphic = new ex.Circle({
-      radius: 30,
-      color: color,
-    });
-    effect.graphics.use(effectGraphic);
+    // Use FX sprites
+    const fxImage = type === 'success' ? Images.fxSuccess : Images.fxBrokenMask;
+    
+    if (fxImage && fxImage.isLoaded()) {
+      const sprite = fxImage.toSprite();
+      sprite.scale = ex.vec(0.5, 0.5);
+      effect.graphics.use(sprite);
+    } else {
+      // Fallback to colored circle
+      const color = type === 'success' 
+        ? ex.Color.fromHex('#FFD700')
+        : ex.Color.fromHex('#FF4444');
+      const effectGraphic = new ex.Circle({
+        radius: 30,
+        color: color,
+      });
+      effect.graphics.use(effectGraphic);
+    }
+    
     effect.graphics.opacity = 0.8;
 
     // Add to scene
