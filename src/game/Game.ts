@@ -4,6 +4,11 @@ import { Player } from '@/game/actors/Player';
 import { Spawner } from '@/game/actors/Spawner';
 import { loader, Images, Sounds } from '@/game/resources';
 
+// Import music files directly for HTML5 Audio
+import level1MusicSrc from '@/assets/sound/soundtrack/level-1.mp3';
+import level2MusicSrc from '@/assets/sound/soundtrack/level-2.mp3';
+import level3MusicSrc from '@/assets/sound/soundtrack/level-3.mp3';
+
 export class GameEngine {
   private engine: ex.Engine;
   private player: Player | null = null;
@@ -11,7 +16,7 @@ export class GameEngine {
   private isInitialized: boolean = false;
   private lastUpdateTime: number = 0;
   private backgroundActor: ex.Actor | null = null;
-  private currentMusicTrack: ex.Sound | null = null;
+  private currentMusicAudio: HTMLAudioElement | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new ex.Engine({
@@ -95,44 +100,44 @@ export class GameEngine {
     // Stop current music
     this.stopMusic();
 
-    let music: ex.Sound | null = null;
+    let musicSrc: string | null = null;
     switch (level) {
       case 1:
-        music = Sounds.level1Music;
+        musicSrc = level1MusicSrc;
         break;
       case 2:
-        music = Sounds.level2Music;
+        musicSrc = level2MusicSrc;
         break;
       case 3:
-        music = Sounds.level3Music;
+        musicSrc = level3MusicSrc;
         break;
     }
 
-    if (music && music.isLoaded()) {
-      music.loop = true;
-      // Use promise to handle autoplay restrictions
-      const playPromise = music.play(0.3);
-      if (playPromise) {
-        playPromise.catch((error) => {
-          console.log('Audio autoplay blocked, will retry on user interaction:', error);
-        });
-      }
-      this.currentMusicTrack = music;
-    } else {
-      console.log('Music not loaded yet for level:', level, 'isLoaded:', music?.isLoaded());
+    if (musicSrc) {
+      this.currentMusicAudio = new Audio(musicSrc);
+      this.currentMusicAudio.loop = true;
+      this.currentMusicAudio.volume = 0.3;
+      this.currentMusicAudio.play().catch((error) => {
+        console.log('Audio play failed:', error);
+      });
     }
   }
 
   public stopMusic(): void {
-    if (this.currentMusicTrack) {
-      this.currentMusicTrack.stop();
-      this.currentMusicTrack = null;
+    if (this.currentMusicAudio) {
+      this.currentMusicAudio.pause();
+      this.currentMusicAudio.currentTime = 0;
+      this.currentMusicAudio = null;
     }
   }
 
   public playGameOverSound(): void {
     if (Sounds.gameOver.isLoaded()) {
-      Sounds.gameOver.play(0.5);
+      // Use HTML5 Audio for game over sound too
+      const audio = new Audio();
+      audio.src = Sounds.gameOver.path;
+      audio.volume = 0.5;
+      audio.play().catch(console.log);
     }
   }
 
