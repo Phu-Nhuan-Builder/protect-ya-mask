@@ -38,9 +38,9 @@ export class Player extends ex.Actor {
   }
 
   onInitialize(engine: ex.Engine): void {
-    // Use player sprite
-    if (Images.player1.isLoaded()) {
-      this.playerSprite = Images.player1.toSprite();
+    // Use player sprite (man-02 for gameplay, man-01 is for game over)
+    if (Images.player2.isLoaded()) {
+      this.playerSprite = Images.player2.toSprite();
       this.playerSprite.scale = ex.vec(PLAYER_SIZE / this.playerSprite.width * 1.5, PLAYER_SIZE / this.playerSprite.height * 1.5);
       this.graphics.use(this.playerSprite);
     } else {
