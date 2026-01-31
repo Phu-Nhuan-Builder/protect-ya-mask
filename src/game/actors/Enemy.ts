@@ -11,6 +11,13 @@ export class Enemy extends ex.Actor {
   private targetX: number;
   private targetY: number;
   private hasCollided: boolean = false;
+  private currentLevel: number;
+  
+  // Level 3 unpredictable movement
+  private zigzagTimer: number = 0;
+  private zigzagInterval: number = 300; // Change direction every 300ms
+  private zigzagAmplitude: number = 0;
+  private perpendicularDir: ex.Vector = ex.vec(0, 0);
 
   constructor(
     x: number,
@@ -18,7 +25,8 @@ export class Enemy extends ex.Actor {
     type: MaskType,
     speed: number,
     targetX: number,
-    targetY: number
+    targetY: number,
+    level: number = 1
   ) {
     super({
       x,
@@ -33,6 +41,13 @@ export class Enemy extends ex.Actor {
     this.speed = speed;
     this.targetX = targetX;
     this.targetY = targetY;
+    this.currentLevel = level;
+    
+    // Setup unpredictable movement for Level 3
+    if (this.currentLevel >= 3) {
+      this.zigzagAmplitude = 80 + Math.random() * 60; // Random amplitude
+      this.zigzagInterval = 200 + Math.random() * 200; // Random interval
+    }
   }
 
   onInitialize(): void {
@@ -75,6 +90,33 @@ export class Enemy extends ex.Actor {
   }
 
   onPreUpdate(engine: ex.Engine, delta: number): void {
+    // Level 3: Unpredictable zigzag movement
+    if (this.currentLevel >= 3) {
+      this.zigzagTimer += delta;
+      
+      if (this.zigzagTimer >= this.zigzagInterval) {
+        this.zigzagTimer = 0;
+        // Randomize next interval for more chaos
+        this.zigzagInterval = 150 + Math.random() * 250;
+        
+        // Calculate new velocity with random perpendicular offset
+        const toTarget = ex.vec(this.targetX - this.pos.x, this.targetY - this.pos.y).normalize();
+        
+        // Get perpendicular vector (rotate 90 degrees)
+        this.perpendicularDir = ex.vec(-toTarget.y, toTarget.x);
+        
+        // Random zigzag direction and amplitude
+        const zigzagOffset = (Math.random() - 0.5) * 2 * this.zigzagAmplitude;
+        
+        // Combine forward movement with zigzag
+        const newVel = toTarget.scale(this.speed).add(this.perpendicularDir.scale(zigzagOffset));
+        this.vel = newVel;
+        
+        // Add slight rotation change for visual chaos
+        this.angularVelocity = (Math.random() - 0.5) * 8;
+      }
+    }
+    
     // Check distance to center
     const distanceToCenter = this.pos.distance(ex.vec(this.targetX, this.targetY));
     
