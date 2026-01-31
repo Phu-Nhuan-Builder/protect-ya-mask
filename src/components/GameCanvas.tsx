@@ -14,9 +14,14 @@ export function GameCanvas() {
   const initGame = useCallback(async () => {
     if (!canvasRef.current || gameInitialized.current) return;
 
-    const game = createGame(canvasRef.current);
-    await game.initialize();
-    gameInitialized.current = true;
+    try {
+      const game = createGame(canvasRef.current);
+      await game.initialize();
+      gameInitialized.current = true;
+      console.log('Game initialized successfully');
+    } catch (error) {
+      console.error('Game initialization failed:', error);
+    }
   }, []);
 
   useEffect(() => {
@@ -33,7 +38,20 @@ export function GameCanvas() {
   // Start/stop game based on state
   useEffect(() => {
     const game = getGame();
-    if (!game) return;
+    if (!game || !gameInitialized.current) {
+      if (state.isPlaying) {
+        console.log('Waiting for game to initialize before starting...');
+        // Retry after a short delay if game is not ready
+        const timer = setTimeout(() => {
+          const g = getGame();
+          if (g && state.isPlaying && !state.isPaused) {
+            g.start();
+          }
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+      return;
+    }
 
     if (state.isPlaying && !state.isPaused) {
       game.start();
