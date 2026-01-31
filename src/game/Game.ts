@@ -110,8 +110,16 @@ export class GameEngine {
 
     if (music && music.isLoaded()) {
       music.loop = true;
-      music.play(0.3);
+      // Use promise to handle autoplay restrictions
+      const playPromise = music.play(0.3);
+      if (playPromise) {
+        playPromise.catch((error) => {
+          console.log('Audio autoplay blocked, will retry on user interaction:', error);
+        });
+      }
       this.currentMusicTrack = music;
+    } else {
+      console.log('Music not loaded yet for level:', level, 'isLoaded:', music?.isLoaded());
     }
   }
 
