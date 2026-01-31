@@ -10,6 +10,7 @@ import {
 } from '@/game/constants';
 import { Enemy } from '@/game/actors/Enemy';
 import * as StoreBridge from '@/game/storeBridge';
+import { Sounds } from '@/game/resources';
 
 export interface WaveEntry {
   time: number;
@@ -96,6 +97,11 @@ export class Spawner {
       this.levelTimer = 0;
       this.generateWaveData();
       StoreBridge.setLevel(this.currentLevel);
+      
+      // Play swoosh sound for level transition
+      if (Sounds.fastSwoosh.isLoaded()) {
+        Sounds.fastSwoosh.play(0.5);
+      }
     }
   }
 
