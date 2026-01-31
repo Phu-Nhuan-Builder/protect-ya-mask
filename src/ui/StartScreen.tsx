@@ -92,7 +92,7 @@ export function StartScreen() {
       </div>
 
       {/* Credits */}
-      <div className="absolute bottom-6 text-xs text-muted-foreground">
+      <div className="mt-4 text-xs text-muted-foreground">
         Global Game Jam 2026 • Theme: Mask
       </div>
     </div>
