@@ -110,7 +110,7 @@ export class Spawner {
     const targetX = GAME_WIDTH / 2;
     const targetY = GAME_HEIGHT / 2;
 
-    const enemy = new Enemy(spawnPos.x, spawnPos.y, type, speed, targetX, targetY);
+    const enemy = new Enemy(spawnPos.x, spawnPos.y, type, speed, targetX, targetY, this.currentLevel);
     this.scene.add(enemy);
   }
 
