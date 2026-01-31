@@ -1,6 +1,8 @@
 import { useGame } from '@/store/GameContext';
 import { useEffect, useState } from 'react';
 import logoImg from '@/assets/logo/logo.png';
+import phunhuanLogo from '@/assets/logo/phunhuanbuilder.jpg';
+import hackonteamLogo from '@/assets/logo/hackonteam.png';
 
 export function StartScreen() {
   const { startGame } = useGame();
@@ -74,6 +76,20 @@ export function StartScreen() {
       <button className="arcade-button" onClick={handleStart}>
         Press SPACE to Wake Up
       </button>
+
+      {/* Sponsor logos */}
+      <div className="flex items-center justify-center gap-8 mt-8">
+        <img 
+          src={phunhuanLogo} 
+          alt="Phu Nhuan Builder" 
+          className="h-16 w-auto rounded-lg object-contain"
+        />
+        <img 
+          src={hackonteamLogo} 
+          alt="Hackon Team" 
+          className="h-16 w-auto rounded-lg object-contain"
+        />
+      </div>
 
       {/* Credits */}
       <div className="absolute bottom-6 text-xs text-muted-foreground">
