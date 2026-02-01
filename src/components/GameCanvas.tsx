@@ -69,15 +69,24 @@ export function GameCanvas() {
     game.onLevelChange(state.level);
   }, [state.level, state.isPlaying]);
 
-  // Restart handler
+  // Restart handler - only on actual restart, not first start
+  const hasPlayedOnce = useRef(false);
   useEffect(() => {
     const game = getGame();
     if (!game) return;
 
     if (state.isPlaying && state.hp === 100 && state.score === 0) {
-      game.restart();
+      if (hasPlayedOnce.current) {
+        game.restart();
+      }
+      hasPlayedOnce.current = true;
     }
-  }, [state.isPlaying, state.hp, state.score]);
+    
+    // Reset on game over so next start triggers restart properly
+    if (state.isGameOver || state.isVictory) {
+      hasPlayedOnce.current = true;
+    }
+  }, [state.isPlaying, state.hp, state.score, state.isGameOver, state.isVictory]);
 
   return (
     <div

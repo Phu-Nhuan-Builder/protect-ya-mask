@@ -53,9 +53,14 @@ export class Spawner {
   }
 
   public start(): void {
+    // Always ensure we start from level 1 on fresh start
+    if (this.currentLevel !== 1) {
+      this.currentLevel = 1;
+    }
     this.isActive = true;
     this.spawnTimer = 0;
     this.levelTimer = 0;
+    this.waveIndex = 0;
     this.generateWaveData();
     StoreBridge.setLevel(this.currentLevel);
   }
